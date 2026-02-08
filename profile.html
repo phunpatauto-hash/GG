@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>โปรไฟล์ของฉัน - Card Shop</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        h2 { color: #ffcc00; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        /* ส่วนฟอร์มแก้ไข */
+        .info-group { margin: 15px 0; }
+        label { display: block; color: #888; font-size: 0.9rem; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; color: white; box-sizing: border-box; }
+        input:disabled { background: #121212; color: #888; border: none; }
+        
+        .btn { padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; border: none; transition: 0.3s; }
+        .btn-edit { background: #ffcc00; color: black; }
+        .btn-save { background: #28a745; color: white; display: none; }
+        
+        /* ส่วนสถานะพัสดุ */
+        .status-box { background: #2a2a2a; padding: 15px; border-radius: 10px; display: flex; align-items: center; gap: 15px; }
+        .status-icon { font-size: 2rem; }
+        .status-text { flex-grow: 1; }
+        .status-badge { background: #ffcc00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button onclick="location.href='index.html'" style="background:none; border:none; color:#888; cursor:pointer; margin-bottom:10px;">← กลับหน้าหลัก</button>
+    
+    <div class="card">
+        <h2>👤 ข้อมูลส่วนตัว</h2>
+        <div class="info-group">
+            <label>ชื่อผู้ใช้งาน (Username)</label>
+            <input type="text" id="p-username" disabled>
+        </div>
+        <div class="info-group">
+            <label>รหัสผ่าน (Password)</label>
+            <input type="password" id="p-password" disabled>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button id="btn-edit" class="btn btn-edit" onclick="enableEdit()">แก้ไขข้อมูล</button>
+            <button id="btn-save" class="btn btn-save" onclick="saveEdit()">บันทึกการเปลี่ยนแปลง</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📦 การจัดส่งของฉัน</h2>
+        <div id="tracking-section">
+            <div class="status-box">
+                <div class="status-icon" id="s-icon">⌛</div>
+                <div class="status-text">
+                    <div style="font-weight: bold;">Battle Deck CT01 <span class="status-badge" id="s-badge">กำลังโหลด...</span></div>
+                    <div id="s-desc" style="font-size: 0.85rem; color: #aaa; margin-top: 5px;">กำลังดึงข้อมูลล่าสุด...</div>
+                </div>
+            </div>
+            <button onclick="location.href='track.html'" style="width:100%; margin-top:15px; background:none; border:1px solid #444; color:#ffcc00; padding:8px; border-radius:5px; cursor:pointer;">ดูรายละเอียดการส่งแบบละเอียด</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. โหลดข้อมูลจาก LocalStorage
+    window.onload = function() {
+        // ดึงชื่อผู้ใช้ที่ Login อยู่ (สมมติว่าคุณเก็บชื่อคน Login ไว้ใน 'currentUser')
+        const loggedInUser = localStorage.getItem("currentUser") || "Guest";
+        const userList = JSON.parse(localStorage.getItem("userList")) || [];
+        
+        // หาข้อมูลของ User คนนี้ในฐานข้อมูล
+        const userData = userList.find(u => u.username === loggedInUser) || {username: loggedInUser, password: "N/A"};
+        
+        document.getElementById("p-username").value = userData.username;
+        document.getElementById("p-password").value = userData.password;
+
+        // 2. โหลดสถานะพัสดุ
+        const orderStatus = localStorage.getItem("orderStatus") || "preparing";
+        updateStatusUI(orderStatus);
+    };
+
+    function updateStatusUI(status) {
+        const icon = document.getElementById("s-icon");
+        const badge = document.getElementById("s-badge");
+        const desc = document.getElementById("s-desc");
+
+        if(status === "preparing") {
+            icon.innerText = "📦";
+            badge.innerText = "กำลังเตรียมของ";
+            desc.innerText = "ร้านค้ากำลังตรวจสอบสินค้าและแพ็คลงกล่อง";
+        } else if(status === "shipping") {
+            icon.innerText = "🚚";
+            badge.innerText = "กำลังจัดส่ง";
+            desc.innerText = "พัสดุอยู่ระหว่างการขนส่งโดยเจ้าหน้าที่";
+        } else if(status === "delivered") {
+            icon.innerText = "✅";
+            badge.innerText = "ส่งสำเร็จ";
+            desc.innerText = "พัสดุถึงจุดหมายปลายทางเรียบร้อยแล้ว";
+        }
+    }
+
+    // 3. ระบบแก้ไขข้อมูล
+    function enableEdit() {
+        document.getElementById("p-username").disabled = false;
+        document.getElementById("p-password").disabled = false;
+        document.getElementById("btn-edit").style.display = "none";
+        document.getElementById("btn-save").style.display = "inline-block";
+        document.getElementById("p-username").focus();
+    }
+
+    function saveEdit() {
+        const newUser = document.getElementById("p-username").value;
+        const newPass = document.getElementById("p-password").value;
+        const oldUser = localStorage.getItem("currentUser");
+
+        let userList = JSON.parse(localStorage.getItem("userList")) || [];
+        
+        // อัปเดตข้อมูลใน List
+        const index = userList.findIndex(u => u.username === oldUser);
+        if (index !== -1) {
+            userList[index].username = newUser;
+            userList[index].password = newPass;
+            localStorage.setItem("userList", JSON.stringify(userList));
+            localStorage.setItem("currentUser", newUser); // อัปเดตชื่อคนที่ล็อคอินอยู่ด้วย
+            
+            alert("บันทึกข้อมูลสำเร็จ!");
+            location.reload(); // รีเฟรชหน้า
+        }
+    }
+</script>
+
+</body>
+</html>
